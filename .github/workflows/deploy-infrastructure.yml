@@ -6,6 +6,11 @@ on:
       - main
   workflow_dispatch:
 
+# Required permissions for OIDC token generation
+permissions:
+  id-token: write   # Required for OIDC authentication
+  contents: read    # Required to read repository contents
+
 env:
   AWS_REGION: ap-southeast-1
   TF_STATE_BUCKET: gpu-demo-terraform-state
@@ -25,8 +30,9 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
+          role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
           aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
@@ -68,6 +74,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
           aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -127,6 +134,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
           aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Cleanup old AMIs
         run: |
