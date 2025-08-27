@@ -14,7 +14,7 @@ resource "aws_cloudfront_distribution" "gpu_demo" {
   comment         = "GPU Demo Application CDN"
 
   origin {
-    domain_name = aws_eip.gpu_demo.public_ip
+    domain_name = aws_instance.gpu_demo.public_dns
     origin_id   = "gpu-demo-origin"
 
     custom_origin_config {
@@ -150,7 +150,7 @@ resource "aws_cloudfront_distribution" "gpu_demo" {
 
 # Route53 Health Check for the instance
 resource "aws_route53_health_check" "gpu_demo" {
-  fqdn                            = aws_eip.gpu_demo.public_ip
+  ip_address                      = aws_eip.gpu_demo.public_ip
   port                            = 80
   type                            = "HTTP"
   resource_path                   = "/health"
