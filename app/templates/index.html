@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Performance Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-microchip"></i>
+                GPU Performance Demo
+            </span>
+            <div class="navbar-text">
+                <span id="connection-status" class="badge bg-secondary">Disconnected</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- System Information Panel -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-server"></i> System Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="system-info">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GPU Information Panel -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-memory"></i> GPU Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="gpu-info">
+                            {% if not gpu_available %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                GPU not available
+                            </div>
+                            {% else %}
+                            <div class="text-center">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Loading GPU info...</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Monitoring Panel -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Real-time Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="cpuChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="memoryChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <canvas id="gpuChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="networkChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmark Controls -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-rocket"></i> GPU vs CPU Benchmarks</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if not gpu_demos_available %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            GPU demos not available - CUML/CuPy not installed
+                        </div>
+                        {% else %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6>Matrix Multiplication</h6>
+                                <div class="mb-3">
+                                    <label for="matrixSize" class="form-label">Matrix Size:</label>
+                                    <select class="form-select" id="matrixSize">
+                                        <option value="512">512x512</option>
+                                        <option value="1024" selected>1024x1024</option>
+                                        <option value="2048">2048x2048</option>
+                                        <option value="4096">4096x4096</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-success" id="runMatrixBenchmark">
+                                    <i class="fas fa-play"></i> Run Matrix Benchmark
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Machine Learning</h6>
+                                <div class="mb-3">
+                                    <label for="mlAlgorithm" class="form-label">Algorithm:</label>
+                                    <select class="form-select" id="mlAlgorithm">
+                                        <option value="kmeans">K-Means Clustering</option>
+                                        <option value="linear_regression">Linear Regression</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-info" id="runMLBenchmark">
+                                    <i class="fas fa-brain"></i> Run ML Benchmark
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Image Processing</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Operations:</label>
+                                    <div class="text-muted">Blur, Edge Detection, Histogram</div>
+                                </div>
+                                <button class="btn btn-warning" id="runImageBenchmark">
+                                    <i class="fas fa-image"></i> Run Image Benchmark
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmark Results -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-trophy"></i> Benchmark Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="benchmark-results">
+                            <div class="text-muted text-center">
+                                Run a benchmark to see results here
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="loadingText">Running benchmark...</h5>
+                    <p class="text-muted">This may take a few moments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

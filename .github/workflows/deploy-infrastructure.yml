@@ -1,0 +1,144 @@
+name: Deploy GPU Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-1
+  TF_STATE_BUCKET: gpu-demo-terraform-state
+  TF_STATE_KEY: infrastructure/terraform.tfstate
+
+jobs:
+  build-ami:
+    name: Build GPU AMI with Packer
+    runs-on: ubuntu-latest
+    outputs:
+      ami-id: ${{ steps.packer.outputs.ami-id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: latest
+
+      - name: Initialize Packer
+        run: packer init packer/gpu-demo.pkr.hcl
+
+      - name: Validate Packer template
+        run: packer validate packer/gpu-demo.pkr.hcl
+
+      - name: Build AMI
+        id: packer
+        run: |
+          packer build -color=false packer/gpu-demo.pkr.hcl | tee packer_output.log
+          AMI_ID=$(grep "ami-" packer_output.log | tail -1 | awk '{print $2}')
+          echo "ami-id=$AMI_ID" >> $GITHUB_OUTPUT
+          echo "Built AMI: $AMI_ID"
+
+      - name: Upload Packer logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: packer-logs
+          path: packer_output.log
+
+  deploy-infrastructure:
+    name: Deploy with Terraform
+    runs-on: ubuntu-latest
+    needs: build-ami
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.7
+
+      - name: Create S3 bucket for state (if not exists)
+        run: |
+          aws s3api head-bucket --bucket ${{ env.TF_STATE_BUCKET }} || \
+          aws s3 mb s3://${{ env.TF_STATE_BUCKET }} --region ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: terraform
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: |
+          terraform plan \
+            -var="custom_ami_id=${{ needs.build-ami.outputs.ami-id }}" \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get outputs
+        working-directory: terraform
+        run: |
+          echo "## Deployment Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **AMI ID**: ${{ needs.build-ami.outputs.ami-id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Instance ID**: $(terraform output -raw instance_id)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Public IP**: $(terraform output -raw public_ip)" >> $GITHUB_STEP_SUMMARY
+          echo "- **CloudFront URL**: $(terraform output -raw cloudfront_url)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Direct URL**: http://$(terraform output -raw public_ip)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Terraform plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/tfplan
+
+  cleanup-old-amis:
+    name: Cleanup Old AMIs
+    runs-on: ubuntu-latest
+    needs: [build-ami, deploy-infrastructure]
+    if: always() && needs.build-ami.result == 'success'
+
+    steps:
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Cleanup old AMIs
+        run: |
+          # Keep only the 3 most recent AMIs to manage storage costs
+          aws ec2 describe-images \
+            --owners self \
+            --filters "Name=name,Values=gpu-demo-*" \
+            --query 'Images | sort_by(@, &CreationDate)[:-3].[ImageId]' \
+            --output text | \
+          while read ami_id; do
+            if [ ! -z "$ami_id" ]; then
+              echo "Deregistering old AMI: $ami_id"
+              aws ec2 deregister-image --image-id $ami_id || true
+            fi
+          done
