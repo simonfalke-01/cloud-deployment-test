@@ -22,7 +22,7 @@ variable "instance_type" {
 variable "ami_name" {
   description = "Name for the AMI"
   type        = string
-  default     = "gpu-demo-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  default     = "gpu-demo-${timestamp()}"
 }
 
 source "amazon-ebs" "gpu-demo" {
@@ -57,7 +57,7 @@ source "amazon-ebs" "gpu-demo" {
     Environment = "development"
     Purpose     = "CUDA ML Demo"
     CreatedBy   = "Packer"
-    Timestamp   = "${formatdate("YYYY-MM-DD hh:mm:ss", timestamp())}"
+    Timestamp   = "${timestamp()}"
   }
 }
 
