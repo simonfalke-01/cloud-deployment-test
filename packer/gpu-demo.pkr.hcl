@@ -7,6 +7,10 @@ packer {
   }
 }
 
+locals {
+  timestamp = regex_replace(timestamp(), "[- TZ:]", "")
+}
+
 variable "aws_region" {
   description = "The AWS region to build the AMI in"
   type        = string
@@ -22,7 +26,7 @@ variable "instance_type" {
 variable "ami_name" {
   description = "Name for the AMI"
   type        = string
-  default     = "gpu-demo-${legacy_isotime("2006-01-02-1504")}"
+  default     = "gpu-demo-${locals.timestamp}"
 }
 
 source "amazon-ebs" "gpu-demo" {
@@ -57,7 +61,7 @@ source "amazon-ebs" "gpu-demo" {
     Environment = "development"
     Purpose     = "CUDA ML Demo"
     CreatedBy   = "Packer"
-    Timestamp   = "${legacy_isotime("2006-01-02 15:04:05")}"
+    Timestamp   = "${locals.timestamp}"
   }
 }
 
