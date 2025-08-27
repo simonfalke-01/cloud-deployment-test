@@ -8,8 +8,8 @@ on:
 
 # Required permissions for OIDC token generation
 permissions:
-  id-token: write   # Required for OIDC authentication
-  contents: read    # Required to read repository contents
+  id-token: write # Required for OIDC authentication
+  contents: read # Required to read repository contents
 
 env:
   AWS_REGION: ap-southeast-1
@@ -30,7 +30,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
+          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -72,7 +72,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
+          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -132,7 +132,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GithubActionsRole
+          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
