@@ -23,14 +23,8 @@ variable "instance_type" {
   default     = "g4dn.xlarge"
 }
 
-variable "ami_name" {
-  description = "Name for the AMI"
-  type        = string
-  default     = "gpu-demo-${locals.timestamp}"
-}
-
 source "amazon-ebs" "gpu-demo" {
-  ami_name      = var.ami_name
+  ami_name      = "gpu-demo-${locals.timestamp}"
   instance_type = var.instance_type
   region        = var.aws_region
 
