@@ -55,7 +55,7 @@ source "amazon-ebs" "gpu-demo" {
     Environment = "development"
     Purpose     = "CUDA ML Demo"
     CreatedBy   = "Packer"
-    Timestamp   = "${locals.timestamp}"
+    Timestamp   = "${local.timestamp}"
   }
 }
 
