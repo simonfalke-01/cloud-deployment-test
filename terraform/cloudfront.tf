@@ -150,14 +150,13 @@ resource "aws_cloudfront_distribution" "gpu_demo" {
 
 # Route53 Health Check for the instance
 resource "aws_route53_health_check" "gpu_demo" {
-  ip_address                      = aws_eip.gpu_demo.public_ip
-  port                            = 80
-  type                            = "HTTP"
-  resource_path                   = "/health"
-  failure_threshold               = "3"
-  request_interval                = "30"
-  cloudwatch_alarm_region         = var.aws_region
-  insufficient_data_health_status = "Unhealthy"
+  ip_address              = aws_eip.gpu_demo.public_ip
+  port                    = 80
+  type                    = "HTTP"
+  resource_path           = "/health"
+  failure_threshold       = "3"
+  request_interval        = "30"
+  cloudwatch_alarm_region = var.aws_region
 
   tags = merge(local.common_tags, {
     Name = "gpu-demo-health-check"
