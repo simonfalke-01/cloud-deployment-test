@@ -27,17 +27,41 @@ echo "NVIDIA driver is ready"
     -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
     -s
 
-# Start services
-systemctl start nginx
-systemctl start gpu-demo
+# Start services with proper error handling
+echo "Starting nginx..."
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+echo "Starting GPU demo application..."
+sudo systemctl start gpu-demo
+sudo systemctl enable gpu-demo
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
-sleep 10
+sleep 15
 
-# Check if services are running
-systemctl is-active --quiet nginx && echo "Nginx is running" || echo "Nginx failed to start"
-systemctl is-active --quiet gpu-demo && echo "GPU Demo app is running" || echo "GPU Demo app failed to start"
+# Check if services are running and restart if needed
+if ! sudo systemctl is-active --quiet nginx; then
+    echo "Nginx failed to start, attempting restart..."
+    sudo systemctl restart nginx
+    sleep 5
+fi
+
+if ! sudo systemctl is-active --quiet gpu-demo; then
+    echo "GPU Demo app failed to start, attempting restart..."
+    sudo systemctl restart gpu-demo
+    sleep 10
+fi
+
+# Final status check with detailed logging
+echo "=== Service Status ==="
+sudo systemctl status nginx --no-pager -l
+sudo systemctl status gpu-demo --no-pager -l
+
+# Test if services are responding
+echo "=== Testing service connectivity ==="
+curl -f http://127.0.0.1:5000/health || echo "Flask app not responding"
+curl -f http://127.0.0.1:80/health || echo "Nginx not responding"
 
 # Set up auto-shutdown if enabled
 if [ "${enable_auto_shutdown}" = "true" ]; then
