@@ -24,7 +24,7 @@ variable "instance_type" {
 }
 
 source "amazon-ebs" "gpu-demo" {
-  ami_name      = "gpu-demo-${locals.timestamp}"
+  ami_name      = "gpu-demo-${local.timestamp}"
   instance_type = var.instance_type
   region        = var.aws_region
 
