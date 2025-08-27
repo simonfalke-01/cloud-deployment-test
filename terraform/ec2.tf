@@ -70,12 +70,7 @@ resource "aws_launch_template" "gpu_demo" {
     name = aws_iam_instance_profile.gpu_demo.name
   }
   
-  dynamic "key_name" {
-    for_each = var.key_name != "" ? [var.key_name] : []
-    content {
-      key_name = key_name.value
-    }
-  }
+  key_name = var.key_name != "" ? var.key_name : null
   
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     region = var.aws_region
