@@ -30,7 +30,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
+          role-to-assume: arn:aws:iam::056323207265:role/GitHub-CICD
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -72,7 +72,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
+          role-to-assume: arn:aws:iam::056323207265:role/GitHub-CICD
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -132,7 +132,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::544067237869:role/GitHub-CICD
+          role-to-assume: arn:aws:iam::056323207265:role/GitHub-CICD
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
