@@ -157,7 +157,7 @@ resource "aws_route53_health_check" "gpu_demo" {
   failure_threshold               = "3"
   request_interval                = "30"
   cloudwatch_alarm_region         = var.aws_region
-  insufficient_data_health_status = "Failure"
+  insufficient_data_health_status = "Unhealthy"
 
   tags = merge(local.common_tags, {
     Name = "gpu-demo-health-check"
