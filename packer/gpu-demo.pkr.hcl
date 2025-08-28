@@ -97,13 +97,14 @@ build {
     ]
   }
 
+  # Install Python and ML dependencies first (fails faster)
+  provisioner "shell" {
+    script = "packer/scripts/install-python.sh"
+  }
+
   # Install NVIDIA drivers and CUDA toolkit
   provisioner "shell" {
     script = "packer/scripts/install-cuda.sh"
-  }
-
-  provisioner "shell" {
-    script = "packer/scripts/install-python.sh"
   }
 
   provisioner "shell" {
