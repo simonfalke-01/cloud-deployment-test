@@ -38,18 +38,24 @@ sudo /opt/miniconda3/bin/conda init bash
 
 # Create conda environment with CUDA support using explicit channels
 sudo /opt/miniconda3/bin/conda create -n rapids -y python=3.10 --override-channels -c conda-forge
-sudo /opt/miniconda3/bin/conda install -n rapids --override-channels -c rapidsai -c conda-forge -c nvidia \
-    cuml=24.02 cupy cudatoolkit=12.0 -y
 
-# Install additional Python packages
+# Install CUDA toolkit first (required for RAPIDS)
+sudo /opt/miniconda3/bin/conda install -n rapids --override-channels -c nvidia -c conda-forge \
+    cuda-toolkit=12.4 -y
+
+# Install RAPIDS cuML (use latest compatible version)
+sudo /opt/miniconda3/bin/conda install -n rapids --override-channels -c rapidsai -c conda-forge -c nvidia \
+    cuml cupy -y
+
+# Install additional Python packages (remove GPUtil since it's pip-only)
 sudo /opt/miniconda3/bin/conda install -n rapids -y --override-channels -c conda-forge \
     flask gunicorn numpy pandas matplotlib seaborn plotly \
-    scikit-learn opencv psutil GPUtil
+    scikit-learn opencv psutil
 
-# Install additional packages with pip in the rapids environment
+# Install additional packages with pip in the rapids environment (including GPUtil)
 sudo /opt/miniconda3/bin/conda run -n rapids pip install \
     flask-cors flask-socketio eventlet \
-    pillow requests boto3
+    pillow requests boto3 GPUtil
 
 # Make conda available to all users
 sudo chown -R root:root /opt/miniconda3
