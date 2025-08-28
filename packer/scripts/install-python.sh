@@ -18,7 +18,7 @@ python3 -m pip install --upgrade pip
 # Install RAPIDS cuML and other GPU-accelerated libraries
 # Note: Using conda for RAPIDS as it's the recommended approach
 wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
+sudo bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
 rm Miniconda3-latest-Linux-x86_64.sh
 
 # Add conda to PATH
