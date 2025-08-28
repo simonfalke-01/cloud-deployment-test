@@ -57,7 +57,7 @@ source "amazon-ebs" "gpu-demo" {
   # Storage configuration for CUDA and ML dependencies
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
-    volume_size           = 30
+    volume_size           = 100
     volume_type           = "gp3"
     iops                  = 3000
     throughput            = 125
@@ -85,19 +85,23 @@ build {
       "sudo apt-get upgrade -y",
       "sudo apt-get install -y curl wget gnupg2 software-properties-common"
     ]
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   # Install NVIDIA drivers and CUDA toolkit
   provisioner "shell" {
     script = "packer/scripts/install-cuda.sh"
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "shell" {
     script = "packer/scripts/install-python.sh"
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "shell" {
     script = "packer/scripts/install-nginx.sh"
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "file" {
@@ -107,10 +111,12 @@ build {
 
   provisioner "shell" {
     script = "packer/scripts/setup-app.sh"
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "shell" {
     script = "packer/scripts/install-cloudwatch.sh"
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "shell" {
@@ -121,5 +127,6 @@ build {
       "sudo rm -rf /var/tmp/*",
       "history -c && history -w"
     ]
+    execute_command = "sudo -E bash -c '{{ .Vars }} {{ .Path }}'"
   }
 }
