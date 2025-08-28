@@ -111,6 +111,13 @@ build {
     script = "packer/scripts/install-nginx.sh"
   }
 
+  # Create directory for app files before upload
+  provisioner "shell" {
+    inline = [
+      "mkdir -p /tmp/app"
+    ]
+  }
+
   provisioner "file" {
     source      = "app/"
     destination = "/tmp/app"
