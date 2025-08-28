@@ -25,13 +25,25 @@ rm Miniconda3-latest-Linux-x86_64.sh
 echo 'export PATH="/opt/miniconda3/bin:$PATH"' | sudo tee -a /etc/environment
 export PATH="/opt/miniconda3/bin:$PATH"
 
-# Create conda environment with CUDA support
-/opt/miniconda3/bin/conda create -n rapids -y python=3.10
-/opt/miniconda3/bin/conda install -n rapids -c rapidsai -c conda-forge -c nvidia \
+# Configure conda to avoid ToS issues and use conda-forge as default
+/opt/miniconda3/bin/conda config --system --set auto_activate_base false
+/opt/miniconda3/bin/conda config --system --add channels conda-forge
+/opt/miniconda3/bin/conda config --system --add channels nvidia
+/opt/miniconda3/bin/conda config --system --add channels rapidsai
+/opt/miniconda3/bin/conda config --system --set channel_priority strict
+/opt/miniconda3/bin/conda config --system --remove channels defaults 2>/dev/null || true
+
+# Initialize conda for all users
+/opt/miniconda3/bin/conda init bash
+sudo /opt/miniconda3/bin/conda init bash
+
+# Create conda environment with CUDA support using explicit channels
+/opt/miniconda3/bin/conda create -n rapids -y python=3.10 --override-channels -c conda-forge
+/opt/miniconda3/bin/conda install -n rapids --override-channels -c rapidsai -c conda-forge -c nvidia \
     cuml=24.02 cupy cudatoolkit=12.0 -y
 
 # Install additional Python packages
-/opt/miniconda3/bin/conda install -n rapids -y \
+/opt/miniconda3/bin/conda install -n rapids -y --override-channels -c conda-forge \
     flask gunicorn numpy pandas matplotlib seaborn plotly \
     scikit-learn opencv psutil GPUtil
 
