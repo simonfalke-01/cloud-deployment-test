@@ -23,10 +23,24 @@ variable "instance_type" {
   default     = "g4dn.xlarge"
 }
 
+variable "vpc_id" {
+  description = "VPC ID where Packer will launch the build instance"
+  type        = string
+  default     = "vpc-0ba01294b113ce3e1"
+}
+
+variable "subnet_id" {
+  description = "Subnet ID where Packer will launch the build instance"
+  type        = string
+  default     = "subnet-0ec48ccbbea8abb74"
+}
+
 source "amazon-ebs" "gpu-demo" {
   ami_name      = "gpu-demo-${local.timestamp}"
   instance_type = var.instance_type
   region        = var.aws_region
+  vpc_id        = var.vpc_id != "" ? var.vpc_id : null
+  subnet_id     = var.subnet_id != "" ? var.subnet_id : null
 
   source_ami_filter {
     filters = {
