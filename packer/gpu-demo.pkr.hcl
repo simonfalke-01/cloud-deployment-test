@@ -81,7 +81,17 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo apt-get update",
+      "echo 'Waiting for cloud-init and fixing time sync issues'",
+      "sudo cloud-init status --wait",
+      "sudo timedatectl set-ntp true",
+      "sleep 10",
+      "echo 'Fixing APT GPG issues by clearing cache and re-importing keys'",
+      "sudo rm -rf /var/lib/apt/lists/*",
+      "sudo mkdir -p /var/lib/apt/lists/partial",
+      "echo 'Re-importing Ubuntu GPG keys'",
+      "sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 871920D1991BC93C",
+      "echo 'Running apt-get update with retry logic'",
+      "for i in 1 2 3 4 5; do sudo apt-get update && break || (echo 'apt-get update failed, retrying...' && sleep 5); done",
       "sudo apt-get upgrade -y",
       "sudo apt-get install -y curl wget gnupg2 software-properties-common"
     ]
